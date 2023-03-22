@@ -4,9 +4,10 @@ import sys
 import re
 import itertools
 
-__all__ = ('split', 'quote')
+__all__ = ("split", "quote")
 
-__version__ = '0.3.0'
+__version__ = "0.3.0"
+
 
 def iter_arg(peek, i):
     quote_mode = False
@@ -21,22 +22,25 @@ def iter_arg(peek, i):
             n_slashes = len(slashes)
             n_quotes = len(quotes)
             slashes_odd = bool(n_slashes % 2)
-            yield '\\' * (n_slashes // 2)
-            magic_sum = n_quotes + quote_mode + 2*slashes_odd
+            yield "\\" * (n_slashes // 2)
+            magic_sum = n_quotes + quote_mode + 2 * slashes_odd
             yield '"' * (magic_sum // 3)
             quote_mode = (magic_sum % 3) == 1
         else:
             yield text
 
+
 def iter_args(s):
-    i = re.finditer(r'(\s+)|(\\*)(\"+)|(.[^\s\\\"]*)', s.lstrip())
+    i = re.finditer(r"(\s+)|(\\*)(\"+)|(.[^\s\\\"]*)", s.lstrip())
     for m in i:
-        yield ''.join(iter_arg(m, i))
+        yield "".join(iter_arg(m, i))
 
-cmd_meta = r'([\"\^\&\|\<\>\(\)\%\!])'
-cmd_meta_or_space = r'[\s\"\^\&\|\<\>\(\)\%\!]'
 
-cmd_meta_inside_quotes = r'([\"\%\!])'
+cmd_meta = r"([\"\^\&\|\<\>\(\)\%\!])"
+cmd_meta_or_space = r"[\s\"\^\&\|\<\>\(\)\%\!]"
+
+cmd_meta_inside_quotes = r"([\"\%\!])"
+
 
 def split(s, like_cmd=True, check=True):
     """
@@ -61,9 +65,10 @@ def split(s, like_cmd=True, check=True):
     CommandLineToArgvW does.
     """
     if like_cmd and re.search(cmd_meta, s):
+
         def i():
             quote_mode = False
-            for m in re.finditer(r'(\^.)|(\")|([^\^\"]+)', s):
+            for m in re.finditer(r"(\^.)|(\")|([^\^\"]+)", s):
                 escaped, quote, text = m.groups()
                 if escaped:
                     if quote_mode:
@@ -81,9 +86,9 @@ def split(s, like_cmd=True, check=True):
                         meta = cmd_meta_inside_quotes if quote_mode else cmd_meta
                         if re.search(meta, text):
                             raise ValueError(f"unquoted cmd metacharacters in string: {repr(s)}")
-        s = ''.join(i())
-    return list(iter_args(s))
 
+        s = "".join(i())
+    return list(iter_args(s))
 
 
 def quote(s, for_cmd=True):
@@ -109,24 +114,25 @@ def quote(s, for_cmd=True):
         return s
     if for_cmd and re.search(cmd_meta, s):
         if not re.search(cmd_meta_inside_quotes, s):
-            m = re.search(r'\\+$', s)
+            m = re.search(r"\\+$", s)
             if m:
                 return '"' + s + m.group() + '"'
             else:
                 return '"' + s + '"'
-        if not re.search(r'[\s\"]', s):
-            return re.sub(cmd_meta, r'^\1', s)
-        return re.sub(cmd_meta, r'^\1', quote(s, for_cmd=False))
-    i = re.finditer(r'(\\*)(\"+)|(\\+)|([^\\\"]+)', s)
+        if not re.search(r"[\s\"]", s):
+            return re.sub(cmd_meta, r"^\1", s)
+        return re.sub(cmd_meta, r"^\1", quote(s, for_cmd=False))
+    i = re.finditer(r"(\\*)(\"+)|(\\+)|([^\\\"]+)", s)
+
     def parts():
         yield '"'
         for m in i:
-            pos,end = m.span()
+            pos, end = m.span()
             slashes, quotes, onlyslashes, text = m.groups()
             if quotes:
                 yield slashes
                 yield slashes
-                yield r'\"' * len(quotes)
+                yield r"\"" * len(quotes)
             elif onlyslashes:
                 if end == len(s):
                     yield onlyslashes
@@ -136,19 +142,21 @@ def quote(s, for_cmd=True):
             else:
                 yield text
         yield '"'
-    return ''.join(parts())
+
+    return "".join(parts())
+
 
 def split_cli():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='split a file into strings using windows-style quoting ')
-    parser.add_argument('filename', nargs='?',
-                        help='file to split')
+        description="split a file into strings using windows-style quoting "
+    )
+    parser.add_argument("filename", nargs="?", help="file to split")
     args = parser.parse_args()
 
     if args.filename:
-        input = open(args.filename, 'r')
+        input = open(args.filename, "r")
     else:
         input = sys.stdin
 
